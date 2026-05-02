@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ПРИЗРАК | ASTRA-8 | LVL 10</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+
+  :root {
+    --bg:      #050510;
+    --panel:   #0a0a1f;
+    --panel2:  #0e0e2a;
+    --border:  #1a1a40;
+    --cyan:    #00e5ff;
+    --magenta: #ff00c8;
+    --green:   #00ff9d;
+    --orange:  #ff9500;
+    --yellow:  #ffe600;
+    --white:   #e8eaf6;
+    --dim:     #5c6bc0;
+    --neg:     #ff4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Rajdhani', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* scanline overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,229,255,0.015) 2px,
+      rgba(0,229,255,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    text-align: center;
+    padding: 48px 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #07071a 0%, var(--bg) 100%);
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  }
+  .header-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--dim);
+    letter-spacing: 6px;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 700;
+    letter-spacing: 12px;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    line-height: 1;
+  }
+  .header-title-ru {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--dim);
+    letter-spacing: 4px;
+    margin-top: 6px;
+  }
+  .hud-bar {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 28px;
+  }
+  .hud-stat {
+    text-align: center;
+  }
+  .hud-stat .val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 2rem;
+    font-weight: bold;
+    display: block;
+    line-height: 1;
+  }
+  .hud-stat .lbl {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--dim);
+    letter-spacing: 3px;
+    display: block;
+    margin-top: 4px;
+  }
+  .hud-divider {
+    width: 1px;
+    background: var(--border);
+    align-self: stretch;
+    min-height: 40px;
+  }
+
+  /* ── LAYOUT ── */
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 6px;
+    color: var(--cyan);
+    border-left: 3px solid var(--cyan);
+    padding-left: 12px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  /* ── PANEL ── */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    position: relative;
+  }
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 4px 4px 0 0;
+  }
+  .panel.cyan::before  { background: var(--cyan); }
+  .panel.magenta::before { background: var(--magenta); }
+  .panel.green::before { background: var(--green); }
+  .panel.orange::before { background: var(--orange); }
+  .panel.yellow::before { background: var(--yellow); }
+
+  /* ── GRID LAYOUTS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+
+  /* ── STAT BAR ── */
+  .stat-item { margin-bottom: 16px; }
+  .stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .stat-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--white);
+    letter-spacing: 2px;
+  }
+  .stat-values {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+  }
+  .stat-bar-bg {
+    background: var(--border);
+    border-radius: 2px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1.2s cubic-bezier(.4,0,.2,1);
+  }
+  .stat-note {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--dim);
+    margin-top: 3px;
+  }
+
+  /* ── SKILL CARD ── */
+  .skill-card {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .skill-card:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 0 12px rgba(0,229,255,0.15);
+  }
+  .skill-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .skill-card-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--white);
+  }
+  .skill-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 2px 10px;
+    border-radius: 2px;
+  }
+  .skill-card-desc {
+    font-size: 0.85rem;
+    color: var(--dim);
+    line-height: 1.5;
+  }
+  .skill-card-abilities {
+    margin-top: 10px;
+    display: none;
+  }
+  .skill-card-abilities.open {
+    display: block;
+  }
+  .ability-line {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--green);
+    border-left: 2px solid var(--green);
+    padding-left: 8px;
+    margin-bottom: 5px;
+    line-height: 1.4;
+  }
+  .toggle-hint {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--dim);
+    margin-top: 8px;
+  }
+
+  /* ── WEAPON CARD ── */
+  .weapon-card {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    transition: border-color 0.2s;
+  }
+  .weapon-card:hover { border-color: var(--cyan); }
+  .weapon-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--white);
+    margin-bottom: 10px;
+  }
+  .weapon-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .ws-item { }
+  .ws-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--dim);
+    letter-spacing: 2px;
+  }
+  .ws-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: bold;
+  }
+  .weapon-special {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: var(--dim);
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    line-height: 1.4;
+  }
+
+  /* ── ITEM CARD ── */
+  .item-card {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .item-tier {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: bold;
+    padding: 3px 7px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+  .item-body { flex: 1; }
+  .item-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+  }
+  .item-effect {
+    font-size: 0.8rem;
+    color: var(--dim);
+    line-height: 1.4;
+  }
+
+  /* ── ABILITY CARD ── */
+  .ability-card {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    border-left: 3px solid;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .ability-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .ability-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+  .ability-desc {
+    font-size: 0.85rem;
+    color: var(--dim);
+    line-height: 1.5;
+  }
+
+  /* ── GALLERY ── */
+  .gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px;
+  }
+  .gallery-main {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
+  }
+  .gallery img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    display: block;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-height: 200px;
+  }
+  .gallery img:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 0 20px rgba(0,229,255,0.2);
+  }
+  .gallery-sketch {
+    grid-column: 1 / 3;
+    margin-top: 4px;
+  }
+  .gallery-sketch img { height: 300px; }
+
+  /* Lightbox */
+  #lightbox {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(5,5,16,0.95);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img {
+    max-width: 92vw;
+    max-height: 92vh;
+    border: 1px solid var(--cyan);
+    border-radius: 4px;
+    box-shadow: 0 0 60px rgba(0,229,255,0.2);
+  }
+  #lb-close {
+    position: fixed;
+    top: 20px; right: 28px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.2rem;
+    color: var(--cyan);
+    cursor: pointer;
+    z-index: 10001;
+  }
+
+  /* ── ARMOR TABLE ── */
+  .armor-table { width: 100%; border-collapse: collapse; }
+  .armor-table th {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .armor-table td {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .armor-table tr:last-child td { border-bottom: none; }
+  .armor-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ── LUCK CARD ── */
+  .luck-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .luck-item {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    text-align: center;
+  }
+  .luck-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--yellow);
+    display: block;
+  }
+  .luck-desc {
+    font-size: 0.8rem;
+    color: var(--dim);
+    margin-top: 4px;
+  }
+  .luck-when {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--dim);
+    margin-top: 4px;
+    letter-spacing: 2px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 24px;
+    border-top: 1px solid var(--border);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--dim);
+    letter-spacing: 3px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .gallery { grid-template-columns: 1fr; }
+    .gallery-main { grid-column: 1; grid-row: auto; }
+    .gallery-sketch { grid-column: 1; }
+    h1 { letter-spacing: 6px; }
+  }
+
+  /* ── GLOW ANIMATIONS ── */
+  @keyframes pulse-cyan {
+    0%, 100% { box-shadow: 0 0 6px rgba(0,229,255,0.3); }
+    50%       { box-shadow: 0 0 18px rgba(0,229,255,0.6); }
+  }
+  .glow-cyan { animation: pulse-cyan 3s ease-in-out infinite; }
+
+  /* Tab system */
+  .tabs { display: flex; gap: 2px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    padding: 8px 18px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 2px;
+  }
+  .tab-btn.active, .tab-btn:hover {
+    background: var(--panel);
+    color: var(--cyan);
+    border-color: var(--cyan);
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ── LIGHTBOX ── -->
+<div id="lightbox">
+  <span id="lb-close">[ ✕ ЗАКРЫТЬ ]</span>
+  <img id="lb-img" src="" alt="">
+</div>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-sub">ASTRA-8 · ПЕРСОНАЖ · УРОВЕНЬ 10</div>
+  <h1>ПРИЗРАК</h1>
+  <div class="header-title-ru">СНАЙПЕР / ТАКТИК / ВЫЖИВШИЙ</div>
+  <div class="hud-bar">
+    <div class="hud-stat">
+      <span class="val" style="color:var(--green)">14</span>
+      <span class="lbl">HP</span>
+    </div>
+    <div class="hud-divider"></div>
+    <div class="hud-stat">
+      <span class="val" style="color:var(--cyan)">21</span>
+      <span class="lbl">ФКБ</span>
+    </div>
+    <div class="hud-divider"></div>
+    <div class="hud-stat">
+      <span class="val" style="color:var(--magenta)">21</span>
+      <span class="lbl">ЭКБ</span>
+    </div>
+    <div class="hud-divider"></div>
+    <div class="hud-stat">
+      <span class="val" style="color:var(--yellow)">+13</span>
+      <span class="lbl">ПОПАДАНИЕ</span>
+    </div>
+    <div class="hud-divider"></div>
+    <div class="hud-stat">
+      <span class="val" style="color:var(--orange)">4</span>
+      <span class="lbl">ОЧК. ДЕЙСТВ.</span>
+    </div>
+    <div class="hud-divider"></div>
+    <div class="hud-stat">
+      <span class="val" style="color:var(--yellow)">+5</span>
+      <span class="lbl">МОД. УДАЧИ</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── GALLERY ── -->
+  <section>
+    <div class="section-title">◈ ГАЛЕРЕЯ ОБЛИКА</div>
+    <div class="gallery">
+      <div class="gallery-main">
+        <img src="https://user-gen-media-assets.s3.amazonaws.com/gpt4o_images/92c6a9a5-c727-4ada-aa0c-9682dfa4778e.png" alt="ПРИЗРАК — полный концепт" title="Кликни для увеличения">
+      </div>
+      <div>
+        <img src="https://user-gen-media-assets.s3.amazonaws.com/gpt4o_images/74c23753-f3dc-433b-9b91-0bd75c43fb8c.png" alt="ПРИЗРАК — портрет" title="Кликни для увеличения" style="height:100%">
+      </div>
+      <div>
+        <img src="https://user-gen-media-assets.s3.amazonaws.com/gpt4o_images/a0aa74a9-b5d7-45b7-ad86-711b2a723f2c.png" alt="ПРИЗРАК — боевая сцена" title="Кликни для увеличения" style="height:100%">
+      </div>
+      <div class="gallery-sketch">
+        <img src="https://user-gen-media-assets.s3.amazonaws.com/gpt4o_images/639022b5-e108-4e09-8ca2-bfe0c6404ada.png" alt="ПРИЗРАК — скетч-лист" title="Кликни для увеличения">
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CHARACTERISTICS ── -->
+  <section>
+    <div class="section-title">◈ ХАРАКТЕРИСТИКИ</div>
+    <div class="grid-2">
+      <div class="panel cyan">
+        <div id="stats-bars">
+          <!-- Ловкость -->
+          <div class="stat-item">
+            <div class="stat-header">
+              <span class="stat-name">ЛОВКОСТЬ</span>
+              <span class="stat-values" style="color:var(--cyan)">20 / мод. +4</span>
+            </div>
+            <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:0%;background:var(--cyan)" data-w="80"></div></div>
+            <div class="stat-note">Попадание · Уклонение · Рефлексы</div>
+          </div>
+          <!-- Удача -->
+          <div class="stat-item">
+            <div class="stat-header">
+              <span class="stat-name">УДАЧА</span>
+              <span class="stat-values" style="color:var(--yellow)">25 / мод. +5</span>
+            </div>
+            <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:0%;background:var(--yellow)" data-w="100"></div></div>
+            <div class="stat-note">МАКСИМУМ · Перебросок/сессию · +2 КБ · +2 попад. · +5 спасброски</div>
+          </div>
+          <!-- Телосложение -->
+          <div class="stat-item">
+            <div class="stat-header">
+              <span class="stat-name">ТЕЛОСЛОЖЕНИЕ</span>
+              <span class="stat-values" style="color:var(--green)">13 (+4 имплант) / +4 HP</span>
+            </div>
+            <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:0%;background:var(--green)" data-w="52"></div></div>
+            <div class="stat-note">Каждые 3 очка = 1 HP · Уклонений: мин. 1/бой</div>
+          </div>
+          <!-- Сила -->
+          <div class="stat-item">
+            <div class="stat-header">
+              <span class="stat-name">СИЛА</span>
+              <span class="stat-values" style="color:var(--dim)">0 / мод. 0</span>
+            </div>
+            <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:0%;background:var(--dim)" data-w="0"></div></div>
+            <div class="stat-note">Компенсируется снаряжением</div>
+          </div>
+          <!-- Интеллект -->
+          <div class="stat-item">
+            <div class="stat-header">
+              <span class="stat-name">ИНТЕЛЛЕКТ</span>
+              <span class="stat-values" style="color:var(--dim)">0 / мод. 0</span>
+            </div>
+            <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:0%;background:var(--dim)" data-w="0"></div></div>
+            <div class="stat-note">Не приоритет билда</div>
+          </div>
+          <!-- Харизма -->
+          <div class="stat-item">
+            <div class="stat-header">
+              <span class="stat-name">ХАРИЗМА</span>
+              <span class="stat-values" style="color:var(--neg)">−5 / мод. −3</span>
+            </div>
+            <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:4%;background:var(--neg)" data-w="4"></div></div>
+            <div class="stat-note">Намеренно снижена при создании — даёт +5 свободных очков</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Броня + HP -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="panel magenta">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--dim);letter-spacing:3px;margin-bottom:14px">КЛАСС БРОНИ</div>
+          <table class="armor-table">
+            <thead>
+              <tr><th>ИСТОЧНИК</th><th style="color:var(--cyan)">ФКБ</th><th style="color:var(--magenta)">ЭКБ</th><th>ОСОБЕННОСТЬ</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>ПАТРИОТ</td><td style="color:var(--cyan)">15</td><td style="color:var(--magenta)">15</td><td style="font-size:0.75rem;color:var(--dim)">Поглощ. 60 ур. при попад.&lt;16</td></tr>
+              <tr><td>Бронежилет</td><td style="color:var(--cyan)">+4</td><td style="color:var(--dim)">—</td><td style="font-size:0.75rem;color:var(--dim)">Поверх брони</td></tr>
+              <tr><td>Энергокомп.</td><td style="color:var(--dim)">—</td><td style="color:var(--magenta)">+4</td><td style="font-size:0.75rem;color:var(--dim)">Поверх одежды</td></tr>
+              <tr><td>Бонус Удачи</td><td style="color:var(--yellow)">+2</td><td style="color:var(--yellow)">+2</td><td style="font-size:0.75rem;color:var(--dim)">Пассивно</td></tr>
+              <tr style="border-top:1px solid var(--cyan)">
+                <td><strong>ИТОГО</strong></td>
+                <td style="color:var(--cyan);font-size:1.1rem"><strong>21</strong></td>
+                <td style="color:var(--magenta);font-size:1.1rem"><strong>21</strong></td>
+                <td style="color:var(--green);font-size:0.75rem">Поглощение 60</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel green">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--dim);letter-spacing:3px;margin-bottom:14px">СПАСБРОСКИ</div>
+          <table class="armor-table">
+            <thead><tr><th>ТИП</th><th>БРОСОК</th><th>ПРОТИВ</th></tr></thead>
+            <tbody>
+              <tr><td>Ловкость</td><td style="color:var(--green)">d20 +9</td><td style="font-size:0.75rem;color:var(--dim)">Ловушки, взрывы</td></tr>
+              <tr><td>Сила/Тел.</td><td style="color:var(--cyan)">d20 +5</td><td style="font-size:0.75rem;color:var(--dim)">Яды, болезни</td></tr>
+              <tr><td>Интеллект</td><td style="color:var(--cyan)">d20 +5</td><td style="font-size:0.75rem;color:var(--dim)">Варп-влияние</td></tr>
+              <tr><td>Удача</td><td style="color:var(--yellow)">d20 +5</td><td style="font-size:0.75rem;color:var(--dim)">Случайные бедствия</td></tr>
+              <tr><td>Харизма</td><td style="color:var(--neg)">d20 +2</td><td style="font-size:0.75rem;color:var(--dim)">Страх, обман</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SKILLS ── -->
+  <section>
+    <div class="section-title">◈ НАВЫКИ (13 очков)</div>
+    <div class="grid-2">
+      <!-- Тактика -->
+      <div class="skill-card" onclick="toggleAbilities(this)">
+        <div class="skill-card-header">
+          <span class="skill-card-name">Тактическая подготовка</span>
+          <span class="skill-badge" style="background:rgba(255,149,0,0.15);color:var(--orange);border:1px solid var(--orange)">9 / 9</span>
+        </div>
+        <div class="stat-bar-bg" style="margin-bottom:10px"><div class="stat-bar-fill" style="width:100%;background:var(--orange)"></div></div>
+        <div class="skill-card-desc">Командный навык. Определяет инициативу, тактику засады, фокус огня и количество очков действия.</div>
+        <div class="skill-card-abilities">
+          <div class="ability-line">◆ +3 к инициативе отряда (постоянно)</div>
+          <div class="ability-line">◆ ФОКУС ОГНЯ: отряд игнорирует 2 КБ цели в раунде</div>
+          <div class="ability-line">◆ ЗАСАДА: враги −2 КБ первые 2 раунда + пропускают ход</div>
+          <div class="ability-line">◆ 9 очков: +1 постоянное очко действия (итого 4/ход)</div>
+          <div class="ability-line">◆ Планируя атаку: +2 к попаданию в 1-м раунде</div>
+        </div>
+        <div class="toggle-hint">[ кликни чтобы раскрыть способности ]</div>
+      </div>
+
+      <!-- Энергооружие -->
+      <div class="skill-card" onclick="toggleAbilities(this)">
+        <div class="skill-card-header">
+          <span class="skill-card-name">Энергетическое оружие</span>
+          <span class="skill-badge" style="background:rgba(0,229,255,0.1);color:var(--cyan);border:1px solid var(--cyan)">+7 итого</span>
+        </div>
+        <div class="stat-bar-bg" style="margin-bottom:10px">
+          <div style="display:flex;height:6px">
+            <div style="width:30.8%;background:var(--cyan);border-radius:2px 0 0 2px"></div>
+            <div style="width:7.7%;background:rgba(0,229,255,0.4)"></div>
+            <div style="width:15.4%;background:rgba(0,229,255,0.6);border-radius:0 2px 2px 0"></div>
+          </div>
+        </div>
+        <div class="skill-card-desc">Базовый навык 4 + Грамота (+1) + Сертификат (+2) = итого +7. Специализация на энергооружии.</div>
+        <div class="skill-card-abilities">
+          <div class="ability-line">◆ 4 очка: штраф за 2-ю атаку снижен с −4 до −3</div>
+          <div class="ability-line">◆ 7+ очков (суммарно): стрельба с двух рук без штрафа</div>
+          <div class="ability-line">◆ Сертификат: медленный перегрев энергооружия</div>
+          <div class="ability-line">◆ Итоговый бонус к попаданию: +7 к d20</div>
+        </div>
+        <div class="toggle-hint">[ кликни чтобы раскрыть способности ]</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── KEY ABILITIES ── -->
+  <section>
+    <div class="section-title">◈ КЛЮЧЕВЫЕ СПОСОБНОСТИ</div>
+    <div class="grid-3">
+      <div class="ability-card" style="border-color:var(--magenta)">
+        <div class="ability-name" style="color:var(--magenta)">⬡ ЗАСАДА</div>
+        <div class="ability-desc">Враги −2 КБ первые 2 раунда и пропускают первый ход. Персонаж получает +2 к попаданию в 1-м раунде боя.</div>
+      </div>
+      <div class="ability-card" style="border-color:var(--cyan)">
+        <div class="ability-name" style="color:var(--cyan)">⬡ ФОКУС ОГНЯ</div>
+        <div class="ability-desc">Раз в раунд: все атаки отряда по одной цели игнорируют 2 пункта КБ. +1 к игнорированию за каждые 5 доп. очков.</div>
+      </div>
+      <div class="ability-card" style="border-color:var(--green)">
+        <div class="ability-name" style="color:var(--green)">⬡ СНАЙПЕРСКИЙ ВЫСТРЕЛ</div>
+        <div class="ability-desc">РВ-203: d20+13 vs (ЭКБ цели −5). Урон 3d6+4 энерг. Бесшумно. Заряжается от портативного реактора.</div>
+      </div>
+      <div class="ability-card" style="border-color:var(--orange)">
+        <div class="ability-name" style="color:var(--orange)">⬡ 4 ОЧК. ДЕЙСТВИЯ</div>
+        <div class="ability-desc">3 базовых + 1 постоянный (Тактика 9). Пример: атака + уклонение + фокус огня + смена позиции.</div>
+      </div>
+      <div class="ability-card" style="border-color:var(--yellow)">
+        <div class="ability-name" style="color:var(--yellow)">⬡ НЕЙРОЛИЗАТОР</div>
+        <div class="ability-desc">×1 за игру: отменить или изменить ЛЮБОЙ бросок — свой или врага. Абсолютный козырь.</div>
+      </div>
+      <div class="ability-card" style="border-color:var(--dim)">
+        <div class="ability-name" style="color:var(--dim)">⬡ УКЛОНЕНИЕ</div>
+        <div class="ability-desc">Доп. действие: d20+4 против атаки ближнего боя. Минимум 1 попытка за бой. Каждое уклонение тратит 1 очко сытости.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WEAPONS ── -->
+  <section>
+    <div class="section-title">◈ ВООРУЖЕНИЕ</div>
+    <div class="grid-auto">
+      <div class="weapon-card" style="border-top:2px solid var(--cyan)">
+        <div class="weapon-name">РВ-203 «Скальпель»</div>
+        <div class="weapon-stats">
+          <div class="ws-item"><div class="ws-label">УРОН</div><div class="ws-value" style="color:var(--yellow)">3d6+4</div></div>
+          <div class="ws-item"><div class="ws-label">ТИП</div><div class="ws-value" style="color:var(--cyan)">Энерг.</div></div>
+          <div class="ws-item"><div class="ws-label">ПОПАДАНИЕ</div><div class="ws-value" style="color:var(--green)">d20+13</div></div>
+          <div class="ws-item"><div class="ws-label">ЗАРЯДОВ</div><div class="ws-value" style="color:var(--dim)">5</div></div>
+        </div>
+        <div class="weapon-special">Игнорирует 5 ЭКБ · Бесшумная · Заряд от реактора · Снайперская дальность</div>
+      </div>
+      <div class="weapon-card" style="border-top:2px solid var(--magenta)">
+        <div class="weapon-name">Плазм. рев. АИ-226</div>
+        <div class="weapon-stats">
+          <div class="ws-item"><div class="ws-label">УРОН</div><div class="ws-value" style="color:var(--yellow)">2d6+4</div></div>
+          <div class="ws-item"><div class="ws-label">ТИП</div><div class="ws-value" style="color:var(--magenta)">Энерг.</div></div>
+          <div class="ws-item"><div class="ws-label">ПОПАДАНИЕ</div><div class="ws-value" style="color:var(--green)">d20+13</div></div>
+          <div class="ws-item"><div class="ws-label">АТ./ХОД</div><div class="ws-value" style="color:var(--dim)">2</div></div>
+        </div>
+        <div class="weapon-special">6 патр. · Перезарядка только при перегреве (&gt;6 выстр./раунд)</div>
+      </div>
+      <div class="weapon-card" style="border-top:2px solid var(--orange)">
+        <div class="weapon-name">Акуст. граната «Соната»</div>
+        <div class="weapon-stats">
+          <div class="ws-item"><div class="ws-label">УРОН</div><div class="ws-value" style="color:var(--yellow)">1d4</div></div>
+          <div class="ws-item"><div class="ws-label">ТИП</div><div class="ws-value" style="color:var(--orange)">Особый</div></div>
+          <div class="ws-item"><div class="ws-label">РАДИУС</div><div class="ws-value" style="color:var(--dim)">2 м</div></div>
+          <div class="ws-item"><div class="ws-label">ЗВУК</div><div class="ws-value" style="color:var(--green)">Тихо</div></div>
+        </div>
+        <div class="weapon-special">Бесшумная детонация · Все в радиусе — Тел.14 или сон на 2 хода</div>
+      </div>
+      <div class="weapon-card" style="border-top:2px solid var(--dim)">
+        <div class="weapon-name">Дымовая граната</div>
+        <div class="weapon-stats">
+          <div class="ws-item"><div class="ws-label">УРОН</div><div class="ws-value" style="color:var(--dim)">—</div></div>
+          <div class="ws-item"><div class="ws-label">ТИП</div><div class="ws-value" style="color:var(--dim)">—</div></div>
+          <div class="ws-item"><div class="ws-label">ПЛОЩАДЬ</div><div class="ws-value" style="color:var(--dim)">4 кв.м</div></div>
+          <div class="ws-item"><div class="ws-label">ТАКТИЧ.</div><div class="ws-value" style="color:var(--green)">✓</div></div>
+        </div>
+        <div class="weapon-special">Дымовая завеса · Прикрытие отхода или атаки</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── GEAR & EXP ITEMS ── -->
+  <section>
+    <div class="section-title">◈ СНАРЯЖЕНИЕ И НАКОПЛЕННЫЙ ОПЫТ</div>
+    <div class="grid-2">
+      <div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--dim);letter-spacing:3px;margin-bottom:12px">ТАКТИЧЕСКОЕ СНАРЯЖЕНИЕ</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="item-card">
+            <div class="item-tier" style="background:rgba(0,229,255,0.1);color:var(--cyan);border:1px solid var(--cyan)">БРОНЯ</div>
+            <div class="item-body"><div class="item-name">Бронекостюм «ПАТРИОТ»</div><div class="item-effect">ФКБ 15 / ЭКБ 15 · Поглощает 60 урона при попадании &lt;16 · Элитные подразделения</div></div>
+          </div>
+          <div class="item-card">
+            <div class="item-tier" style="background:rgba(0,229,255,0.1);color:var(--cyan);border:1px solid var(--cyan)">БРОНЯ</div>
+            <div class="item-body"><div class="item-name">Бронежилет + Энергокомпенсатор</div><div class="item-effect">+4 ФКБ (жилет) · +4 ЭКБ (компенсатор) · Надевается поверх</div></div>
+          </div>
+          <div class="item-card">
+            <div class="item-tier" style="background:rgba(255,149,0,0.1);color:var(--orange);border:1px solid var(--orange)">ГАДЖЕТ</div>
+            <div class="item-body"><div class="item-name">Тактический анализатор</div><div class="item-effect">Со 2-го раунда: +3 к попаданию и +2 к защите против анализируемой цели</div></div>
+          </div>
+          <div class="item-card">
+            <div class="item-tier" style="background:rgba(0,255,157,0.1);color:var(--green);border:1px solid var(--green)">ГАДЖЕТ</div>
+            <div class="item-body"><div class="item-name">Прыжковый ранец</div><div class="item-effect">Рывки до 10 м по вертикали / горизонтали · 4 заряда · Тактическое маневрирование</div></div>
+          </div>
+          <div class="item-card">
+            <div class="item-tier" style="background:rgba(92,107,192,0.1);color:var(--dim);border:1px solid var(--dim)">УТИЛ.</div>
+            <div class="item-body"><div class="item-name">Прибор ночного видения</div><div class="item-effect">Видимость в условиях плохой освещённости · Крепится к визору</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--dim);letter-spacing:3px;margin-bottom:12px">НАКОПЛЕННЫЙ ОПЫТ (Т1–Т3)</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="item-card">
+            <div class="item-tier" style="background:rgba(92,107,192,0.15);color:var(--dim);border:1px solid var(--dim)">Т1</div>
+            <div class="item-body"><div class="item-name" style="color:var(--cyan)">«Красная Молния»</div><div class="item-effect">+4 Сила и Ловкость на 2 боя · +2 сытости · Восстанавливает 2 уклонения · 12 шт./нед.</div></div>
+          </div>
+          <div class="item-card">
+            <div class="item-tier" style="background:rgba(92,107,192,0.15);color:var(--dim);border:1px solid var(--dim)">Т1</div>
+            <div class="item-body"><div class="item-name" style="color:var(--cyan)">Грамота по физике</div><div class="item-effect">+1 к навыку энергетического оружия · +1 к работе с электроникой</div></div>
+          </div>
+          <div class="item-card">
+            <div class="item-tier" style="background:rgba(0,255,157,0.1);color:var(--green);border:1px solid var(--green)">Т2</div>
+            <div class="item-body"><div class="item-name" style="color:var(--green)">Сертификат оружейника</div><div class="item-effect">+2 к навыку энергетического оружия · Медленный перегрев и разряд</div></div>
+          </div>
+          <div class="item-card">
+            <div class="item-tier" style="background:rgba(255,0,200,0.1);color:var(--magenta);border:1px solid var(--magenta)">Т3</div>
+            <div class="item-body"><div class="item-name" style="color:var(--magenta)">Боевой кибер-имплант</div><div class="item-effect">+4 к Телосложению → +4 HP · Вшит в спину · След от операции на правом предплечье</div></div>
+          </div>
+          <div class="item-card">
+            <div class="item-tier" style="background:rgba(255,0,200,0.1);color:var(--magenta);border:1px solid var(--magenta)">Т3</div>
+            <div class="item-body"><div class="item-name" style="color:var(--magenta)">Нейролизатор</div><div class="item-effect">×1 за игру: изменить ЛЮБОЙ бросок — свой или противника</div></div>
+          </div>
+          <div class="item-card">
+            <div class="item-tier" style="background:rgba(255,230,0,0.1);color:var(--yellow);border:1px solid var(--yellow)">Т3</div>
+            <div class="item-body"><div class="item-name" style="color:var(--yellow)">Полотенце «Удача Автостопщика»</div><div class="item-effect">×2 за игру: использовать мод. Удачи (+5) вместо любого другого модификатора</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── LUCK ── -->
+  <section>
+    <div class="section-title">◈ УДАЧА (25 очков — максимум)</div>
+    <div class="luck-grid">
+      <div class="luck-item glow-cyan">
+        <span class="luck-val">+5</span>
+        <div class="luck-desc">ко всем спасброскам</div>
+        <div class="luck-when">ПОСТОЯННО</div>
+      </div>
+      <div class="luck-item" style="border-color:rgba(255,230,0,0.2)">
+        <span class="luck-val">+2</span>
+        <div class="luck-desc">к физ. и энерг. КБ</div>
+        <div class="luck-when">ПОСТОЯННО</div>
+      </div>
+      <div class="luck-item" style="border-color:rgba(255,230,0,0.2)">
+        <span class="luck-val">+2</span>
+        <div class="luck-desc">к попаданию</div>
+        <div class="luck-when">ПОСТОЯННО</div>
+      </div>
+      <div class="luck-item" style="border-color:rgba(255,0,200,0.2)">
+        <span class="luck-val" style="font-size:1.5rem">ПЕРЕБРОСОК</span>
+        <div class="luck-desc">любого куба — своего</div>
+        <div class="luck-when">×1 / СЕССИЮ</div>
+      </div>
+      <div class="luck-item" style="border-color:rgba(255,230,0,0.3)">
+        <span class="luck-val" style="font-size:1.5rem">МОД +5</span>
+        <div class="luck-desc">вместо любого (полотенце)</div>
+        <div class="luck-when">×2 / ИГРУ</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  ASTRA-8 · СИСТЕМА ПЕРСОНАЖЕЙ · ПРИЗРАК · LVL 10 · ПОСТРОЕНО ПО ПРАВИЛАМ СИСТЕМЫ
+</footer>
+
+<!-- ── SCRIPTS ── -->
+<script>
+  // Animate stat bars on load
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.querySelectorAll('.stat-bar-fill[data-w]').forEach(el => {
+        el.style.transition = 'width 1.4s cubic-bezier(.4,0,.2,1)';
+        el.style.width = el.dataset.w + '%';
+      });
+    }, 300);
+  });
+
+  // Skill toggle
+  function toggleAbilities(card) {
+    const ab = card.querySelector('.skill-card-abilities');
+    const hint = card.querySelector('.toggle-hint');
+    if (ab.classList.contains('open')) {
+      ab.classList.remove('open');
+      hint.textContent = '[ кликни чтобы раскрыть способности ]';
+    } else {
+      ab.classList.add('open');
+      hint.textContent = '[ кликни чтобы скрыть ]';
+    }
+  }
+
+  // Lightbox
+  const lb = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lb-img');
+  document.querySelectorAll('.gallery img').forEach(img => {
+    img.addEventListener('click', () => {
+      lbImg.src = img.src;
+      lb.classList.add('open');
+    });
+  });
+  lb.addEventListener('click', () => lb.classList.remove('open'));
+</script>
+
+</body>
+</html>
